@@ -4,7 +4,8 @@ import json
 import os
 import subprocess
 import sys
-from utils import print_coloured
+
+from utils import get_time, print_coloured
 
 ARGV = sys.argv
 
@@ -69,8 +70,9 @@ def main():
     except:
         raise_error(
             f"Exception occurred while running the following command:\n{cmd_string}")
+    print_coloured(f"[{get_time()}] ", 'white', 'bold')
     print_coloured(
-        f"\nSynching finished. The below command has been executed:\n", 'green', 'bold')
+        f"\nSynching finished. The following command has been executed:\n", 'green', 'bold')
     print_coloured(f"{cmd_string}\n", 'white')
 
 
@@ -79,7 +81,7 @@ def raise_error(message):
     Prints the given error message and exits with a non-zero code.
     @param message: error message
     """
-    print_coloured('ERROR: ', 'red', 'bold')
+    print_coloured(f"[{get_time()}] ERROR: ", 'red', 'bold')
     print_coloured(f"{message}\n\n", 'red')
     usage()
     sys.exit(1)
@@ -95,5 +97,5 @@ def usage():
         '<push/pull> <dir_name/all> [rsync_options]\n', 'yellow', 'bold')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

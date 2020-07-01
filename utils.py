@@ -2,7 +2,16 @@
 Common utitilies.
 """
 
+from datetime import datetime
 from sys import stdout
+
+
+def get_time():
+    """
+    Returns current time.
+    @return: time in HH:MM:SS format
+    """
+    return datetime.now().strftime('%H:%M:%S')
 
 
 def print_coloured(text, colour, effect=''):
