@@ -28,6 +28,11 @@ def main():
         subprocess.check_call(cmd)
     except subprocess.CalledProcessError:
         raise_error(f"Exception occurred while running the following command:\n{cmd_string}")
+    except KeyboardInterrupt:
+        print_coloured(f"[{get_time()}] ", 'white')
+        print_coloured('KeyboardInterrupt: ', 'yellow', 'bold')
+        print_coloured('User halted execution\n', 'yellow')
+        sys.exit(1)
     print_coloured(f"[{get_time()}] ", 'white')
     print_coloured('\nSynching finished. The following command has been executed:\n', 'green', 'bold')
     print_coloured(f"{cmd_string}\n", 'grey')
