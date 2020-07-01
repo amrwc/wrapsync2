@@ -1,58 +1,29 @@
 #!/usr/bin/env python3
 
+from os.path import dirname, isfile, realpath
 import json
-import os
 import subprocess
 import sys
 
 from utils import get_time, print_coloured
 
-ARGV = sys.argv
-
-SCRIPT_PARENT_DIR_PATH = os.path.dirname(os.path.realpath(ARGV[0]))
 CONFIG_FILE_NAME = 'config.json'
+SCRIPT_PARENT_DIR_PATH = dirname(realpath(sys.argv[0]))
 CONFIG_FILE_PATH = f"{SCRIPT_PARENT_DIR_PATH}/{CONFIG_FILE_NAME}"
 
 
 def main():
     """
-    The applications main entry point.
+    The application's main entry point.
     """
-    if not os.path.isfile(CONFIG_FILE_PATH):
+    args = parse_argv(sys.argv)
+    if not isfile(CONFIG_FILE_PATH):
         raise_error(
             f"The config file doesn't exist in '{CONFIG_FILE_PATH}'")
     with open(CONFIG_FILE_PATH) as config_file:
         config = json.load(config_file)
 
-    if len(ARGV) < 2:
-        raise_error('No action has been specified in the first argument')
-    action = ARGV[1]
-    if action in ['help', '--help', '-help', '-h']:
-        usage()
-        sys.exit(0)
-    if action not in ['push', 'pull']:
-        raise_error('The action must either be \'push\' or \'pull\'')
-    if len(ARGV) < 3:
-        raise_error('No directory has been specified in the second argument')
-    dir_name = ARGV[2]
-
-    # Define the `rsync` command
-    cmd = ['rsync']
-    # Append flags if any have been declared
-    if config['flags']:
-        cmd.append(f"-{config['flags']}")
-    # Append excludions if any have been declared
-    if config['exclude']:
-        for exclude in config['exclude']:
-            cmd.append(f"--exclude='{exclude}'")
-    # Append any remaining command-line arguments as rsync options
-    for option in ARGV[3:]:
-        cmd.append(option)
-
-    paths = get_paths(config, action, dir_name)
-    cmd.append(paths['from'])
-    cmd.append(paths['to'])
-
+    cmd = get_rsync_command(config, args)
     cmd_string = ' '.join(cmd)
     try:
         subprocess.check_call(cmd)
@@ -63,6 +34,30 @@ def main():
     print_coloured(
         f"\nSynching finished. The following command has been executed:\n", 'green', 'bold')
     print_coloured(f"{cmd_string}\n", 'grey')
+
+
+def parse_argv(argv=[]):
+    """
+    Validates and returns command-line arguments.
+    @param argv: argument vector; all command-line arguments supplied to the script
+    @return: a dictionary containing the 'action', 'dir_name' and any remaining arguments as 'options'
+    """
+    if len(argv) < 2:
+        raise_error('No action has been specified in the first argument')
+    action = argv[1]
+    if action in ['help', '--help', '-help', '-h']:
+        usage()
+        sys.exit(0)
+    if action not in ['push', 'pull']:
+        raise_error('The action must either be \'push\' or \'pull\'')
+    if len(argv) < 3:
+        raise_error('No directory has been specified in the second argument')
+    dir_name = argv[2]
+    return {
+        'action': action,
+        'dir_name': dir_name,
+        'options': argv[3:]
+    }
 
 
 def get_paths(config, action, dir_name):
@@ -80,20 +75,45 @@ def get_paths(config, action, dir_name):
     if action == 'push':
         if dir_name == 'all':
             paths['from'] = config['local-dir-path']
-            # Parent remote dir
-            paths['to'] = f"{config['username']}@{os.path.dirname(config['remote-dir-path'])}"
+            # Parent dir of the remote dir
+            paths['to'] = f"{config['username']}@{dirname(config['remote-dir-path'])}"
         else:
             paths['from'] = f"{config['local-dir-path']}/{dir_name}"
             paths['to'] = f"{config['username']}@{config['remote-dir-path']}"
     else:
         if dir_name == 'all':
             paths['from'] = f"{config['username']}@{config['remote-dir-path']}"
-            # Parent dir
-            paths['to'] = os.path.dirname(config['local-dir-path'])
+            # Parent dir of the local dir
+            paths['to'] = dirname(config['local-dir-path'])
         else:
             paths['from'] = f"{config['username']}@{config['remote-dir-path']}/{dir_name}"
             paths['to'] = config['local-dir-path']
     return paths
+
+
+def get_rsync_command(config, args):
+    """
+    Builds and returns the `rsync` command.
+    @param config: the script's configuration
+    @param args: command-line arguments
+    @return: `rsync` command split into a list
+    """
+    cmd = ['rsync']
+    # Append flags if, declared
+    if config['flags']:
+        cmd.append(f"-{config['flags']}")
+    # Append exclusions, if declared
+    if config['exclude']:
+        for exclude in config['exclude']:
+            cmd.append(f"--exclude='{exclude}'")
+    # Append all remaining command-line arguments as rsync options
+    for option in args['options']:
+        cmd.append(option)
+    # Append local and remote paths
+    paths = get_paths(config, args['action'], args['dir_name'])
+    cmd.append(paths['from'])
+    cmd.append(paths['to'])
+    return cmd
 
 
 def raise_error(message):
