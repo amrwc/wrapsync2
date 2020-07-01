@@ -1,0 +1,27 @@
+name: Python Test and Lint
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python3 -m pip3 install --upgrade pip3
+          pip3 install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Lint with Flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --show-source --statistics
+      - name: Test with Pytest
+        run: |
+          pytest
