@@ -49,22 +49,9 @@ def main():
     for option in ARGV[3:]:
         cmd.append(option)
 
-    if action == 'push':
-        if dir_name == 'all':
-            cmd.append(config['local-dir-path'])
-            # Parent dir
-            cmd.append(os.path.dirname(config['remote-dir-path']))
-        else:
-            cmd.append(f"{config['local-dir-path']}/{dir_name}")
-            cmd.append(config['remote-dir-path'])
-    else:
-        if dir_name == 'all':
-            cmd.append(config['remote-dir-path'])
-            # Parent dir
-            cmd.append(os.path.dirname(config['local-dir-path']))
-        else:
-            cmd.append(f"{config['remote-dir-path']}/{dir_name}")
-            cmd.append(config['local-dir-path'])
+    paths = get_paths(config, action, dir_name)
+    cmd.append(paths['from'])
+    cmd.append(paths['to'])
 
     cmd_string = ' '.join(cmd)
     try:
@@ -76,6 +63,37 @@ def main():
     print_coloured(
         f"\nSynching finished. The following command has been executed:\n", 'green', 'bold')
     print_coloured(f"{cmd_string}\n", 'grey')
+
+
+def get_paths(config, action, dir_name):
+    """
+    Returns 'from' and 'to' paths.
+    @param config: wrapsync configuration
+    @param action: 'push'/'pull'
+    @param dir_name: name of the directory to append to paths from the config
+    @return: dictionary containing 'from' and 'to' paths
+    """
+    paths = {
+        'from': '',
+        'to': ''
+    }
+    if action == 'push':
+        if dir_name == 'all':
+            paths['from'] = config['local-dir-path']
+            # Parent remote dir
+            paths['to'] = f"{config['username']}@{os.path.dirname(config['remote-dir-path'])}"
+        else:
+            paths['from'] = f"{config['local-dir-path']}/{dir_name}"
+            paths['to'] = f"{config['username']}@{config['remote-dir-path']}"
+    else:
+        if dir_name == 'all':
+            paths['from'] = f"{config['username']}@{config['remote-dir-path']}"
+            # Parent dir
+            paths['to'] = os.path.dirname(config['local-dir-path'])
+        else:
+            paths['from'] = f"{config['username']}@{config['remote-dir-path']}/{dir_name}"
+            paths['to'] = config['local-dir-path']
+    return paths
 
 
 def raise_error(message):

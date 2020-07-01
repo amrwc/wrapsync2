@@ -16,9 +16,9 @@ directories.
 
    - `username` – SSH login,
    - `remote-dir-path` – an absolute path to the remote directory containing
-     everything we may want to sync, e.g. `{remote-parent-dir-path}/services`,
+     everything we may want to sync, e.g. `john@ssh-example.com:/home/john/services`,
    - `local-dir-path` – an absolute path to the local directory containing
-     everything we may want to sync, e.g. `{local-parent-dir-path}/services`.
+     everything we may want to sync, e.g. `/Users/Documents/services`.
 
    Optional:
 
@@ -54,4 +54,21 @@ directories.
    ws pull windows --delete
    ```
 
+### Unit tests
+
+1. Install [Pytest][pytest].
+
+   ```console
+   pip install -U pytest
+   ```
+
+1. Run the tests.
+
+   ```console
+   python3 -m pytest
+   # Or simply...
+   pytest
+   ```
+
+[pytest]: https://docs.pytest.org
 [wrapsync]: https://github.com/amrwc/wrapsync

@@ -1,6 +1,6 @@
 {
   "username": "john",
-  "remote-dir-path": "john@ssh-example.com:/Users/john/Documents/programs",
+  "remote-dir-path": "ssh-example.com:/Users/john/Documents/programs",
   "local-dir-path": "/Users/john/Documents/projects",
   "flags": "aP",
   "exclude": ["node_modules", "bin", "*.class", "*.jar", "*.war"]
