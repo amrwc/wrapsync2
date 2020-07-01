@@ -59,7 +59,7 @@ directories.
 1. Install [Pytest][pytest].
 
    ```console
-   pip install -U pytest
+   pip3 install -U pytest
    ```
 
 1. Run the tests.
@@ -70,5 +70,25 @@ directories.
    pytest
    ```
 
+### Linting
+
+1. Install [Flake8][flake8].
+
+   ```console
+   pip3 install flake8
+   ```
+
+1. Run the linter manually.
+
+   ```console
+   flake8
+   ```
+
+1. Or, integrate the linter with the editor.
+
+   VS Code-specific instructions:
+   <https://code.visualstudio.com/docs/python/linting>
+
+[flake8]: https://flake8.pycqa.org/en/latest/index.html
 [pytest]: https://docs.pytest.org
 [wrapsync]: https://github.com/amrwc/wrapsync

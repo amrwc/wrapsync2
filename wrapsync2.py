@@ -18,8 +18,7 @@ def main():
     """
     args = parse_argv(sys.argv)
     if not isfile(CONFIG_FILE_PATH):
-        raise_error(
-            f"The config file doesn't exist in '{CONFIG_FILE_PATH}'")
+        raise_error(f"The config file doesn't exist in '{CONFIG_FILE_PATH}'")
     with open(CONFIG_FILE_PATH) as config_file:
         config = json.load(config_file)
 
@@ -27,12 +26,10 @@ def main():
     cmd_string = ' '.join(cmd)
     try:
         subprocess.check_call(cmd)
-    except:
-        raise_error(
-            f"Exception occurred while running the following command:\n{cmd_string}")
+    except subprocess.CalledProcessError:
+        raise_error(f"Exception occurred while running the following command:\n{cmd_string}")
     print_coloured(f"[{get_time()}] ", 'white')
-    print_coloured(
-        f"\nSynching finished. The following command has been executed:\n", 'green', 'bold')
+    print_coloured('\nSynching finished. The following command has been executed:\n', 'green', 'bold')
     print_coloured(f"{cmd_string}\n", 'grey')
 
 
@@ -122,7 +119,7 @@ def raise_error(message):
     @param message: error message
     """
     print_coloured(f"[{get_time()}] ", 'white')
-    print_coloured(f"ERROR: ", 'red', 'bold')
+    print_coloured('ERROR: ', 'red', 'bold')
     print_coloured(f"{message}\n\n", 'red')
     usage()
     sys.exit(1)
@@ -134,8 +131,7 @@ def usage():
     """
     print_coloured('Usage:\n', 'white', 'bold')
     print_coloured('$ ./wrapsync2.py ', 'white')
-    print_coloured(
-        '<push/pull> <dir_name/all> [rsync_options]\n', 'yellow', 'bold')
+    print_coloured('<push/pull> <dir_name/all> [rsync_options]\n', 'yellow', 'bold')
 
 
 if __name__ == '__main__':

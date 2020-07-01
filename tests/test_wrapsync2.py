@@ -18,8 +18,7 @@ CONFIG = {
 
 @pytest.mark.parametrize('argv, expected_result', [
     (['script_name.py', 'push', 'directory_name', '--update', '--another-option'],
-        {'action': 'push', 'dir_name': 'directory_name',
-            'options': ['--update', '--another-option']}),
+        {'action': 'push', 'dir_name': 'directory_name', 'options': ['--update', '--another-option']}),
     (['script_name.py', 'pull', 'directory_name'],
         {'action': 'pull', 'dir_name': 'directory_name', 'options': []})
 ])
@@ -28,14 +27,10 @@ def test_should_have_gotten_command_line_arguments(argv, expected_result):
 
 
 @pytest.mark.parametrize('action, dir_name, expected_result', [
-    ('push', 'all', {'from': LOCAL_DIR_PATH,
-                     'to': f"{USERNAME}@{REMOTE_PARENT_DIR_PATH}"}),
-    ('pull', 'all', {'from': f"{USERNAME}@{REMOTE_DIR_PATH}",
-                     'to': LOCAL_PARENT_DIR_PATH}),
-    ('push', 'SomeDir', {'from': f"{LOCAL_DIR_PATH}/SomeDir",
-                         'to': f"{USERNAME}@{REMOTE_DIR_PATH}"}),
-    ('pull', 'SomeDir', {'from': f"{USERNAME}@{REMOTE_DIR_PATH}/SomeDir",
-                         'to': LOCAL_DIR_PATH})
+    ('push', 'all', {'from': LOCAL_DIR_PATH, 'to': f"{USERNAME}@{REMOTE_PARENT_DIR_PATH}"}),
+    ('pull', 'all', {'from': f"{USERNAME}@{REMOTE_DIR_PATH}", 'to': LOCAL_PARENT_DIR_PATH}),
+    ('push', 'SomeDir', {'from': f"{LOCAL_DIR_PATH}/SomeDir", 'to': f"{USERNAME}@{REMOTE_DIR_PATH}"}),
+    ('pull', 'SomeDir', {'from': f"{USERNAME}@{REMOTE_DIR_PATH}/SomeDir", 'to': LOCAL_DIR_PATH})
 ])
 def test_should_have_gotten_correct_paths(action, dir_name, expected_result):
     assert(get_paths(CONFIG, action, dir_name)) == expected_result
