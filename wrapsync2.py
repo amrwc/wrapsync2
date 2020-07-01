@@ -50,16 +50,18 @@ def main():
         cmd.append(option)
 
     if action == 'push':
-        if dir_name is 'all':
+        if dir_name == 'all':
             cmd.append(config['local-dir-path'])
-            cmd.append(config['remote-parent-dir-path'])
+            # Parent dir
+            cmd.append(os.path.dirname(config['remote-dir-path']))
         else:
             cmd.append(f"{config['local-dir-path']}/{dir_name}")
             cmd.append(config['remote-dir-path'])
     else:
-        if dir_name is 'all':
+        if dir_name == 'all':
             cmd.append(config['remote-dir-path'])
-            cmd.append(config['local-parent-dir-path'])
+            # Parent dir
+            cmd.append(os.path.dirname(config['local-dir-path']))
         else:
             cmd.append(f"{config['remote-dir-path']}/{dir_name}")
             cmd.append(config['local-dir-path'])
@@ -70,10 +72,10 @@ def main():
     except:
         raise_error(
             f"Exception occurred while running the following command:\n{cmd_string}")
-    print_coloured(f"[{get_time()}] ", 'white', 'bold')
+    print_coloured(f"[{get_time()}] ", 'white')
     print_coloured(
         f"\nSynching finished. The following command has been executed:\n", 'green', 'bold')
-    print_coloured(f"{cmd_string}\n", 'white')
+    print_coloured(f"{cmd_string}\n", 'grey')
 
 
 def raise_error(message):
@@ -81,7 +83,8 @@ def raise_error(message):
     Prints the given error message and exits with a non-zero code.
     @param message: error message
     """
-    print_coloured(f"[{get_time()}] ERROR: ", 'red', 'bold')
+    print_coloured(f"[{get_time()}] ", 'white')
+    print_coloured(f"ERROR: ", 'red', 'bold')
     print_coloured(f"{message}\n\n", 'red')
     usage()
     sys.exit(1)

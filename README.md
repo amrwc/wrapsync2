@@ -15,15 +15,8 @@ directories.
    Required:
 
    - `username` – SSH login,
-   - `remote-parent-dir-path` – an absolute path to the parent directory of
-     `remote-dir-path`, e.g.
-     `{username}@ssh.example.com:/home/jhon/Documents/repositories`; this
-     enables syncing using the `all` option,
    - `remote-dir-path` – an absolute path to the remote directory containing
      everything we may want to sync, e.g. `{remote-parent-dir-path}/services`,
-   - `local-parent-dir-path` – an absolute path to the parent directory of
-     `local-dir-path`, e.g. `/Users/jon/Documents/repositories`; this enables
-     syncing using the `all` option,
    - `local-dir-path` – an absolute path to the local directory containing
      everything we may want to sync, e.g. `{local-parent-dir-path}/services`.
 

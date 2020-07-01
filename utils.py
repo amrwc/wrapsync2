@@ -28,7 +28,7 @@ def print_coloured(text, colour, effect=''):
 
 def get_colour(colour):
     """
-    Returns an ASCII escape sequence for the given colour.
+    Returns an ANSI escape sequence for the given colour.
     @param colour: name of the colour
     @return: escape sequence for the given colour
     """
@@ -37,7 +37,8 @@ def get_colour(colour):
         'red': '31m',
         'yellow': '33m',
         'green': '32m',
-        'white': '37m'
+        'grey': '37m',
+        'white': '97m'
     }
     return f"{sequence_base}{colours[colour]}"
 
