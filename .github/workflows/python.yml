@@ -1,3 +1,5 @@
+# Workflow based on the following GitHub article:
+# https://docs.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions
 name: Python Test and Lint
 
 on: [push, pull_request]
@@ -18,10 +20,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Test with Pytest
+        run: |
+          python3 -m pytest -vv
       - name: Lint with Flake8
         run: |
           # Stop the build if there are Python syntax errors or undefined names
           flake8 . --count --show-source --statistics
-      - name: Test with Pytest
-        run: |
-          python3 -m pytest -vv
