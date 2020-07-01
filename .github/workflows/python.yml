@@ -24,4 +24,4 @@ jobs:
           flake8 . --count --show-source --statistics
       - name: Test with Pytest
         run: |
-          pytest
+          python3 -m pytest -vv
