@@ -2,7 +2,7 @@ import pytest
 import subprocess
 from unittest.mock import patch, mock_open
 
-from wrapsync2 import parse_argv, get_config, get_paths, get_rsync_command, raise_error, main
+from wrapsync2 import parse_argv, get_config, get_paths, get_rsync_command, execute_rsync, main
 
 USERNAME = 'johndoe'
 LOCAL_DIR_PATH = 'local/dir/path'
@@ -22,7 +22,7 @@ CONFIG = {
     ([]),  # Not enough arguments
     (['script_name.py']),  # Not enough arguments
     (['script_name.py', 'act']),  # Wrong action
-    (['script_name.py', 'push'])  # No directory
+    (['script_name.py', 'push'])  # No directory specified
 ])
 def should_have_raised_error_while_parsing_argv_for_incorrect_input(argv):
     with pytest.raises(SystemExit) as e:
@@ -31,7 +31,7 @@ def should_have_raised_error_while_parsing_argv_for_incorrect_input(argv):
     assert e.value.code == 1
 
 
-@pytest.mark.parametrize('argv', [(['script_name.py', 'help'])])
+@pytest.mark.parametrize('argv', [(['script_name.py', 'help']), (['script_name.py', 'HeLp'])])
 def should_have_displayed_usage_information_while_parsing_argv(argv):
     with pytest.raises(SystemExit) as e:
         parse_argv(argv)
@@ -90,33 +90,34 @@ def should_have_gotten_paths(action, dir_name, expected_result):
       '--delete', '--whatever', f"{USERNAME}@{REMOTE_DIR_PATH}", f"{LOCAL_PARENT_DIR_PATH}"])
 ])
 def should_have_gotten_rsync_command(args, expected_result):
-    assert get_rsync_command(CONFIG, args) == expected_result
+    assert get_rsync_command(args, CONFIG) == expected_result
 
 
-@pytest.mark.parametrize('exception', [(subprocess.CalledProcessError), (KeyboardInterrupt), (Exception)])
-def should_have_handled_exception_during_subprocess_execution(monkeypatch, exception):
+@pytest.mark.parametrize('exception', [(subprocess.CalledProcessError), (KeyboardInterrupt)])
+def should_have_handled_exception_while_executing_rsync(monkeypatch, exception):
     def mock_check_call(*args, **kwargs):
-        raise exception
+        raise exception('', '')
     monkeypatch.setattr('wrapsync2.subprocess.check_call', mock_check_call)
     with pytest.raises(SystemExit) as e:
-        main()
+        execute_rsync([])
     assert e.type == SystemExit
     assert e.value.code == 1
 
 
-def should_have_raised_error():
-    with pytest.raises(SystemExit) as e:
-        raise_error('Any message')
-    assert e.type == SystemExit
-    assert e.value.code == 1
-
-
-def should_have_executed_subprocess_correctly(monkeypatch):
+def should_have_executed_rsync(monkeypatch):
     try:
-        monkeypatch.setattr('wrapsync2.parse_argv', lambda *args, **kwargs: {})
-        monkeypatch.setattr('wrapsync2.get_config', lambda *args, **kwargs: {})
-        monkeypatch.setattr('wrapsync2.get_rsync_command', lambda *args, **kwargs: [])
         monkeypatch.setattr('wrapsync2.subprocess.check_call', lambda *args, **kwargs: None)
+        execute_rsync([])
+    except Exception:
+        pytest.fail('Should have executed rsync')
+
+
+def should_have_executed_all_required_components_via_main(monkeypatch):
+    monkeypatch.setattr('wrapsync2.parse_argv', lambda *args, **kwargs:
+                        {'action': 'push', 'dir_name': 'dir', 'options': []})
+    monkeypatch.setattr('wrapsync2.get_config', lambda *args, **kwargs: CONFIG)
+    monkeypatch.setattr('wrapsync2.subprocess.check_call', lambda *args, **kwargs: None)
+    try:
         main()
     except Exception:
-        pytest.fail('Should have executed `subprocess` correctly')
+        pytest.fail('Should have executed all required components via main')

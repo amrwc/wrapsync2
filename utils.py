@@ -3,7 +3,41 @@ Common utitilies.
 """
 
 from datetime import datetime
-from sys import stdout
+from sys import exit, stdout
+
+
+def raise_error(message, cmd=[]):
+    """
+    Prints the given error message and exits with a non-zero code.
+    @param message: error message
+    """
+    print_coloured(f"[{get_time()}] ", 'white')
+    print_coloured('ERROR: ', 'red', 'bold')
+    if cmd:
+        print_coloured(f"{message}\n", 'red')
+        print_cmd(cmd)
+        print('')
+    else:
+        print_coloured(f"{message}\n\n", 'red')
+    usage()
+    exit(1)
+
+
+def usage():
+    """
+    Prints usage instructions.
+    """
+    print_coloured('Usage:\n', 'white', 'bold')
+    print_coloured('$ ./wrapsync2.py ', 'white')
+    print_coloured('<push/pull> <dir_name/all> [rsync_options]\n', 'yellow', 'bold')
+
+
+def print_cmd(cmd):
+    """
+    Prints the given `rsync` command to the console.
+    @param cmd: rsync command in a list form
+    """
+    print_coloured(f"{' '.join(cmd)}\n", 'grey')
 
 
 def get_time():

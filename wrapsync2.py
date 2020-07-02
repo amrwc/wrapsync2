@@ -5,7 +5,7 @@ import json
 import subprocess
 import sys
 
-from utils import get_time, print_coloured
+from utils import raise_error, usage, print_cmd, get_time, print_coloured
 
 CONFIG_FILE_NAME = 'config.json'
 SCRIPT_PARENT_DIR_PATH = dirname(realpath(sys.argv[0]))
@@ -18,21 +18,8 @@ def main():
     """
     args = parse_argv(sys.argv)
     config = get_config(CONFIG_FILE_PATH)
-    cmd = get_rsync_command(config, args)
-    cmd_string = ' '.join(cmd)
-
-    try:
-        subprocess.check_call(cmd)
-    except subprocess.CalledProcessError:
-        raise_error(f"Exception occurred while running the following command:\n{cmd_string}")
-    except KeyboardInterrupt:
-        print_coloured(f"[{get_time()}] ", 'white')
-        print_coloured('KeyboardInterrupt: ', 'yellow', 'bold')
-        print_coloured('User halted the execution\n', 'yellow')
-        sys.exit(1)
-    print_coloured(f"\n[{get_time()}] ", 'white')
-    print_coloured('Synching finished. The following command has been executed:\n', 'green', 'bold')
-    print_coloured(f"{cmd_string}\n", 'grey')
+    cmd = get_rsync_command(args, config)
+    execute_rsync(cmd)
 
 
 def parse_argv(argv=[]):
@@ -44,7 +31,7 @@ def parse_argv(argv=[]):
     if len(argv) < 2:
         raise_error('No action has been specified in the first argument')
     action = argv[1]
-    if action in ['help', '--help', '-help', '-h']:
+    if action.lower() in ['--help', '-help', '-h', 'help']:
         usage()
         sys.exit(0)
     if action not in ['push', 'pull']:
@@ -102,7 +89,7 @@ def get_paths(config, action, dir_name):
     return paths
 
 
-def get_rsync_command(config, args):
+def get_rsync_command(args, config):
     """
     Builds and returns the `rsync` command.
     @param config: the script's configuration
@@ -127,25 +114,24 @@ def get_rsync_command(config, args):
     return cmd
 
 
-def raise_error(message):
+def execute_rsync(cmd):
     """
-    Prints the given error message and exits with a non-zero code.
-    @param message: error message
+    Executes the given `rsync` command as a sub-process.
+    @param cmd: pre-built rsync command split into a list
     """
-    print_coloured(f"[{get_time()}] ", 'white')
-    print_coloured('ERROR: ', 'red', 'bold')
-    print_coloured(f"{message}\n\n", 'red')
-    usage()
-    sys.exit(1)
-
-
-def usage():
-    """
-    Prints usage instructions.
-    """
-    print_coloured('Usage:\n', 'white', 'bold')
-    print_coloured('$ ./wrapsync2.py ', 'white')
-    print_coloured('<push/pull> <dir_name/all> [rsync_options]\n', 'yellow', 'bold')
+    try:
+        subprocess.check_call(cmd)
+    except subprocess.CalledProcessError:
+        raise_error('Exception occurred while running the following command:\n', cmd)
+    except KeyboardInterrupt:
+        print_coloured(f"\n[{get_time()}] ", 'white')
+        print_coloured('KeyboardInterrupt: ', 'yellow', 'bold')
+        print_coloured('User halted the execution of the following command:\n', 'yellow')
+        print_cmd(cmd)
+        sys.exit(1)
+    print_coloured(f"\n[{get_time()}] ", 'white')
+    print_coloured('Synching finished. The following command has been executed:\n', 'green', 'bold')
+    print_cmd(cmd)
 
 
 if __name__ == '__main__':
