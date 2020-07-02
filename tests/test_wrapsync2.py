@@ -1,6 +1,7 @@
 import pytest
+from unittest.mock import patch, mock_open
 
-from wrapsync2 import parse_argv, get_config, get_paths, get_rsync_command
+from wrapsync2 import parse_argv, get_config, get_paths, get_rsync_command, main
 
 USERNAME = 'johndoe'
 LOCAL_DIR_PATH = 'local/dir/path'
@@ -22,6 +23,14 @@ def test_should_have_raised_error_while_getting_config_when_the_file_doesnt_exis
         get_config('config.json')
     assert e.type == SystemExit
     assert e.value.code == 1
+
+
+def test_should_have_gotten_config(monkeypatch):
+    config = {'test-key': 'test-val'}
+    monkeypatch.setattr('wrapsync2.isfile', lambda *args, **kwargs: True)
+    with patch('builtins.open', mock_open(read_data='data')):
+        monkeypatch.setattr('wrapsync2.json.load', lambda *args, **kwargs: config)
+        assert get_config('random-config.json') == config
 
 
 @pytest.mark.parametrize('argv, expected_result', [
@@ -60,3 +69,25 @@ def test_should_have_gotten_correct_paths(action, dir_name, expected_result):
 ])
 def test_should_have_gotten_correct_rsync_command(args, expected_result):
     assert(get_rsync_command(CONFIG, args)) == expected_result
+
+
+@pytest.mark.parametrize('exception', [(KeyboardInterrupt), (Exception)])
+def test_should_have_handled_exception_during_subprocess_execution(monkeypatch, exception):
+    def mock_check_call(*args, **kwargs):
+        raise exception
+    monkeypatch.setattr('wrapsync2.subprocess.check_call', mock_check_call)
+    with pytest.raises(SystemExit) as e:
+        main()
+    assert e.type == SystemExit
+    assert e.value.code == 1
+
+
+def test_should_have_executed_subprocess_correctly(monkeypatch):
+    try:
+        monkeypatch.setattr('wrapsync2.parse_argv', lambda *args, **kwargs: {})
+        monkeypatch.setattr('wrapsync2.get_config', lambda *args, **kwargs: {})
+        monkeypatch.setattr('wrapsync2.get_rsync_command', lambda *args, **kwargs: [])
+        monkeypatch.setattr('wrapsync2.subprocess.check_call', lambda *args, **kwargs: None)
+        main()
+    except Exception:
+        pytest.fail('Should have executed `subprocess` correctly')
