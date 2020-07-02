@@ -1,7 +1,8 @@
 import pytest
+import subprocess
 from unittest.mock import patch, mock_open
 
-from wrapsync2 import parse_argv, get_config, get_paths, get_rsync_command, main
+from wrapsync2 import parse_argv, get_config, get_paths, get_rsync_command, raise_error, main
 
 USERNAME = 'johndoe'
 LOCAL_DIR_PATH = 'local/dir/path'
@@ -17,20 +18,25 @@ CONFIG = {
 }
 
 
-def test_should_have_raised_error_while_getting_config_when_the_file_doesnt_exist(monkeypatch):
-    monkeypatch.setattr('wrapsync2.isfile', lambda *args, **kwargs: False)
+@pytest.mark.parametrize('argv', [
+    ([]),  # Not enough arguments
+    (['script_name.py']),  # Not enough arguments
+    (['script_name.py', 'act']),  # Wrong action
+    (['script_name.py', 'push'])  # No directory
+])
+def should_have_raised_error_while_parsing_argv_for_incorrect_input(argv):
     with pytest.raises(SystemExit) as e:
-        get_config('config.json')
+        parse_argv(argv)
     assert e.type == SystemExit
     assert e.value.code == 1
 
 
-def test_should_have_gotten_config(monkeypatch):
-    config = {'test-key': 'test-val'}
-    monkeypatch.setattr('wrapsync2.isfile', lambda *args, **kwargs: True)
-    with patch('builtins.open', mock_open(read_data='data')):
-        monkeypatch.setattr('wrapsync2.json.load', lambda *args, **kwargs: config)
-        assert get_config('random-config.json') == config
+@pytest.mark.parametrize('argv', [(['script_name.py', 'help'])])
+def should_have_displayed_usage_information_while_parsing_argv(argv):
+    with pytest.raises(SystemExit) as e:
+        parse_argv(argv)
+    assert e.type == SystemExit
+    assert e.value.code == 0
 
 
 @pytest.mark.parametrize('argv, expected_result', [
@@ -39,8 +45,24 @@ def test_should_have_gotten_config(monkeypatch):
     (['script_name.py', 'pull', 'directory_name'],
         {'action': 'pull', 'dir_name': 'directory_name', 'options': []})
 ])
-def test_should_have_gotten_command_line_arguments(argv, expected_result):
-    assert(parse_argv(argv)) == expected_result
+def should_have_gotten_argv(argv, expected_result):
+    assert parse_argv(argv) == expected_result
+
+
+def should_have_raised_error_while_getting_config_when_the_file_doesnt_exist(monkeypatch):
+    monkeypatch.setattr('wrapsync2.isfile', lambda *args, **kwargs: False)
+    with pytest.raises(SystemExit) as e:
+        get_config('config.json')
+    assert e.type == SystemExit
+    assert e.value.code == 1
+
+
+def should_have_gotten_config(monkeypatch):
+    config = {'test-key': 'test-val'}
+    monkeypatch.setattr('wrapsync2.isfile', lambda *args, **kwargs: True)
+    with patch('builtins.open', mock_open(read_data='data')):
+        monkeypatch.setattr('wrapsync2.json.load', lambda *args, **kwargs: config)
+        assert get_config('random-config.json') == config
 
 
 @pytest.mark.parametrize('action, dir_name, expected_result', [
@@ -49,8 +71,8 @@ def test_should_have_gotten_command_line_arguments(argv, expected_result):
     ('push', 'SomeDir', {'from': f"{LOCAL_DIR_PATH}/SomeDir", 'to': f"{USERNAME}@{REMOTE_DIR_PATH}"}),
     ('pull', 'SomeDir', {'from': f"{USERNAME}@{REMOTE_DIR_PATH}/SomeDir", 'to': LOCAL_DIR_PATH})
 ])
-def test_should_have_gotten_correct_paths(action, dir_name, expected_result):
-    assert(get_paths(CONFIG, action, dir_name)) == expected_result
+def should_have_gotten_paths(action, dir_name, expected_result):
+    assert get_paths(CONFIG, action, dir_name) == expected_result
 
 
 @pytest.mark.parametrize('args, expected_result', [
@@ -67,12 +89,12 @@ def test_should_have_gotten_correct_paths(action, dir_name, expected_result):
      ['rsync', '-aP', '--exclude=\'node_modules\'', '--exclude=\'*.jar\'',
       '--delete', '--whatever', f"{USERNAME}@{REMOTE_DIR_PATH}", f"{LOCAL_PARENT_DIR_PATH}"])
 ])
-def test_should_have_gotten_correct_rsync_command(args, expected_result):
-    assert(get_rsync_command(CONFIG, args)) == expected_result
+def should_have_gotten_rsync_command(args, expected_result):
+    assert get_rsync_command(CONFIG, args) == expected_result
 
 
-@pytest.mark.parametrize('exception', [(KeyboardInterrupt), (Exception)])
-def test_should_have_handled_exception_during_subprocess_execution(monkeypatch, exception):
+@pytest.mark.parametrize('exception', [(subprocess.CalledProcessError), (KeyboardInterrupt), (Exception)])
+def should_have_handled_exception_during_subprocess_execution(monkeypatch, exception):
     def mock_check_call(*args, **kwargs):
         raise exception
     monkeypatch.setattr('wrapsync2.subprocess.check_call', mock_check_call)
@@ -82,7 +104,14 @@ def test_should_have_handled_exception_during_subprocess_execution(monkeypatch, 
     assert e.value.code == 1
 
 
-def test_should_have_executed_subprocess_correctly(monkeypatch):
+def should_have_raised_error():
+    with pytest.raises(SystemExit) as e:
+        raise_error('Any message')
+    assert e.type == SystemExit
+    assert e.value.code == 1
+
+
+def should_have_executed_subprocess_correctly(monkeypatch):
     try:
         monkeypatch.setattr('wrapsync2.parse_argv', lambda *args, **kwargs: {})
         monkeypatch.setattr('wrapsync2.get_config', lambda *args, **kwargs: {})
