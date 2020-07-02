@@ -17,13 +17,10 @@ def main():
     The application's main entry point.
     """
     args = parse_argv(sys.argv)
-    if not isfile(CONFIG_FILE_PATH):
-        raise_error(f"The config file doesn't exist in '{CONFIG_FILE_PATH}'")
-    with open(CONFIG_FILE_PATH) as config_file:
-        config = json.load(config_file)
-
+    config = get_config(CONFIG_FILE_PATH)
     cmd = get_rsync_command(config, args)
     cmd_string = ' '.join(cmd)
+
     try:
         subprocess.check_call(cmd)
     except subprocess.CalledProcessError:
@@ -31,7 +28,7 @@ def main():
     except KeyboardInterrupt:
         print_coloured(f"[{get_time()}] ", 'white')
         print_coloured('KeyboardInterrupt: ', 'yellow', 'bold')
-        print_coloured('User halted execution\n', 'yellow')
+        print_coloured('User halted the execution\n', 'yellow')
         sys.exit(1)
     print_coloured(f"\n[{get_time()}] ", 'white')
     print_coloured('Synching finished. The following command has been executed:\n', 'green', 'bold')
@@ -60,6 +57,18 @@ def parse_argv(argv=[]):
         'dir_name': dir_name,
         'options': argv[3:]
     }
+
+
+def get_config(config_path):
+    """
+    Returns the config file contents as a dictionary or raises an error if the file doesn't exist.
+    @param config_path: path to the config file
+    @return: config file contents
+    """
+    if not isfile(config_path):
+        raise_error(f"The config file doesn't exist in '{config_path}'")
+    with open(config_path) as config_file:
+        return json.load(config_file)
 
 
 def get_paths(config, action, dir_name):

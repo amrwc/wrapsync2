@@ -1,6 +1,6 @@
 import pytest
 
-from wrapsync2 import parse_argv, get_paths, get_rsync_command
+from wrapsync2 import parse_argv, get_config, get_paths, get_rsync_command
 
 USERNAME = 'johndoe'
 LOCAL_DIR_PATH = 'local/dir/path'
@@ -14,6 +14,14 @@ CONFIG = {
     'flags': 'aP',
     'exclude': ["node_modules", "*.jar"]
 }
+
+
+def test_should_have_raised_error_while_getting_config_when_the_file_doesnt_exist(monkeypatch):
+    monkeypatch.setattr('wrapsync2.isfile', lambda *args, **kwargs: False)
+    with pytest.raises(SystemExit) as e:
+        get_config('config.json')
+    assert e.type == SystemExit
+    assert e.value.code == 1
 
 
 @pytest.mark.parametrize('argv, expected_result', [
