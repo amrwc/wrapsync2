@@ -33,8 +33,8 @@ def main():
         print_coloured('KeyboardInterrupt: ', 'yellow', 'bold')
         print_coloured('User halted execution\n', 'yellow')
         sys.exit(1)
-    print_coloured(f"[{get_time()}] ", 'white')
-    print_coloured('\nSynching finished. The following command has been executed:\n', 'green', 'bold')
+    print_coloured(f"\n[{get_time()}] ", 'white')
+    print_coloured('Synching finished. The following command has been executed:\n', 'green', 'bold')
     print_coloured(f"{cmd_string}\n", 'grey')
 
 
