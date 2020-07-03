@@ -2,17 +2,28 @@ import pytest
 import subprocess
 from unittest.mock import patch, mock_open
 
-from wrapsync2 import parse_argv, get_config, get_paths, get_rsync_command, execute_rsync, main
+from wrapsync2 import (
+    parse_argv,
+    get_config,
+    get_paths,
+    build_remote_path,
+    build_local_path,
+    get_rsync_command,
+    execute_rsync,
+    main
+)
 
 USERNAME = 'johndoe'
-LOCAL_DIR_PATH = 'local/dir/path'
-LOCAL_PARENT_DIR_PATH = 'local/dir'
-REMOTE_DIR_PATH = 'remote/dir/path'
-REMOTE_PARENT_DIR_PATH = 'remote/dir'
+DOMAIN = 'example.com'
+LOCAL_PATH = 'local/dir/path'
+LOCAL_PARENT_PATH = 'local/dir'
+REMOTE_PATH = 'remote/dir/path'
+REMOTE_PARENT_PATH = 'remote/dir'
 CONFIG = {
     'username': USERNAME,
-    'local-dir-path': LOCAL_DIR_PATH,
-    'remote-dir-path': REMOTE_DIR_PATH,
+    'domain': DOMAIN,
+    'local-path': LOCAL_PATH,
+    'remote-path': REMOTE_PATH,
     'flags': 'aP',
     'exclude': ["node_modules", "*.jar"]
 }
@@ -66,28 +77,44 @@ def should_have_gotten_config(monkeypatch):
 
 
 @pytest.mark.parametrize('action, dir_name, expected_result', [
-    ('push', 'all', {'from': LOCAL_DIR_PATH, 'to': f"{USERNAME}@{REMOTE_PARENT_DIR_PATH}"}),
-    ('pull', 'all', {'from': f"{USERNAME}@{REMOTE_DIR_PATH}", 'to': LOCAL_PARENT_DIR_PATH}),
-    ('push', 'SomeDir', {'from': f"{LOCAL_DIR_PATH}/SomeDir", 'to': f"{USERNAME}@{REMOTE_DIR_PATH}"}),
-    ('pull', 'SomeDir', {'from': f"{USERNAME}@{REMOTE_DIR_PATH}/SomeDir", 'to': LOCAL_DIR_PATH})
+    ('push', 'all', {'from': LOCAL_PATH, 'to': f"{USERNAME}@{DOMAIN}:{REMOTE_PARENT_PATH}"}),
+    ('pull', 'all', {'from': f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}", 'to': LOCAL_PARENT_PATH}),
+    ('push', 'SomeDir', {'from': f"{LOCAL_PATH}/SomeDir", 'to': f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}"}),
+    ('pull', 'SomeDir', {'from': f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}/SomeDir", 'to': LOCAL_PATH})
 ])
 def should_have_gotten_paths(action, dir_name, expected_result):
     assert get_paths(CONFIG, action, dir_name) == expected_result
 
 
+@pytest.mark.parametrize('is_parent, expected_result', [
+    (True, f"{USERNAME}@{DOMAIN}:{REMOTE_PARENT_PATH}"),
+    (False, f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}")
+])
+def should_have_built_remote_path(is_parent, expected_result):
+    assert build_remote_path(CONFIG, is_parent) == expected_result
+
+
+@pytest.mark.parametrize('is_parent, expected_result', [
+    (True, LOCAL_PARENT_PATH),
+    (False, LOCAL_PATH)
+])
+def should_have_built_local_path(is_parent, expected_result):
+    assert build_local_path(CONFIG, is_parent) == expected_result
+
+
 @pytest.mark.parametrize('args, expected_result', [
     ({'action': 'push', 'dir_name': 'directory_name', 'options': []},
      ['rsync', '-aP', '--exclude=\'node_modules\'', '--exclude=\'*.jar\'',
-      f"{LOCAL_DIR_PATH}/directory_name", f"{USERNAME}@{REMOTE_DIR_PATH}"]),
+      f"{LOCAL_PATH}/directory_name", f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}"]),
     ({'action': 'pull', 'dir_name': 'directory_name', 'options': []},
      ['rsync', '-aP', '--exclude=\'node_modules\'', '--exclude=\'*.jar\'',
-      f"{USERNAME}@{REMOTE_DIR_PATH}/directory_name", f"{LOCAL_DIR_PATH}"]),
+      f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}/directory_name", f"{LOCAL_PATH}"]),
     ({'action': 'push', 'dir_name': 'all', 'options': ['--update']},
      ['rsync', '-aP', '--exclude=\'node_modules\'', '--exclude=\'*.jar\'',
-      '--update', f"{LOCAL_DIR_PATH}", f"{USERNAME}@{REMOTE_PARENT_DIR_PATH}"]),
+      '--update', f"{LOCAL_PATH}", f"{USERNAME}@{DOMAIN}:{REMOTE_PARENT_PATH}"]),
     ({'action': 'pull', 'dir_name': 'all', 'options': ['--delete', '--whatever']},
      ['rsync', '-aP', '--exclude=\'node_modules\'', '--exclude=\'*.jar\'',
-      '--delete', '--whatever', f"{USERNAME}@{REMOTE_DIR_PATH}", f"{LOCAL_PARENT_DIR_PATH}"])
+      '--delete', '--whatever', f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}", f"{LOCAL_PARENT_PATH}"])
 ])
 def should_have_gotten_rsync_command(args, expected_result):
     assert get_rsync_command(args, CONFIG) == expected_result

@@ -18,7 +18,7 @@ def raise_error(message, cmd=[]):
         print_cmd(cmd)
         print('')
     else:
-        print_coloured(f"{message}\n\n", 'red')
+        print_coloured(f"\n{message}\n\n", 'red')
     usage()
     exit(1)
 

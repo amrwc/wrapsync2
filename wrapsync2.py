@@ -1,5 +1,33 @@
 #!/usr/bin/env python3
 
+"""
+`wrapsync2` is a wrapper script for `rsync` and a Python rewrite of [wrapsync][wrapsync]. Its main purpose is to
+simplify `rsync`'ing common directories.
+
+`rsync` works with files and directories alike. The key to correctly synchronise is to recognise that the source is
+directly transported into the destination. I.e. when a directory is specified as a source and a directory with the same
+name is the destination, it will get 'duplicated'. E.g.:
+
+```
+# Bad, not intuitive copy
+rsync john@ssh-example.com:/home/john/my-app /home/john/my-app
+```
+
+The above will create a copy of the remote `my-app` directory inside of the local path, resulting in
+`/home/john/my-app/my-app`. To avoid such case and, more intuitively, overwrite/update the `my-app` directory, the
+parent directory must be supplied. I.e.:
+
+```
+# Good, will overwrite/update the local copy
+rsync john@ssh-example.com:/home/john/my-app /home/john
+
+# Analogously, overwrite/update the remote copy
+rsync /home/john/my-app john@ssh-example.com:/home/john
+```
+
+@author amrwc
+"""
+
 from os.path import dirname, isfile, realpath
 import json
 import subprocess
@@ -14,7 +42,7 @@ CONFIG_FILE_PATH = f"{SCRIPT_PARENT_DIR_PATH}/{CONFIG_FILE_NAME}"
 
 def main():
     """
-    The application's main entry point.
+    The application's entry point.
     """
     args = parse_argv(sys.argv)
     config = get_config(CONFIG_FILE_PATH)
@@ -66,27 +94,56 @@ def get_paths(config, action, dir_name):
     @param dir_name: name of the directory to append to paths from the config
     @return: dictionary containing 'from' and 'to' paths
     """
-    paths = {
-        'from': '',
-        'to': ''
-    }
+    path_from = ''
+    path_to = ''
     if action == 'push':
         if dir_name == 'all':
-            paths['from'] = config['local-dir-path']
-            # Parent dir of the remote dir
-            paths['to'] = f"{config['username']}@{dirname(config['remote-dir-path'])}"
+            path_from = build_local_path(config, False)
+            path_to = build_remote_path(config, True)
         else:
-            paths['from'] = f"{config['local-dir-path']}/{dir_name}"
-            paths['to'] = f"{config['username']}@{config['remote-dir-path']}"
+            path_from = f"{build_local_path(config, False)}/{dir_name}"
+            path_to = build_remote_path(config, False)
     else:
         if dir_name == 'all':
-            paths['from'] = f"{config['username']}@{config['remote-dir-path']}"
-            # Parent dir of the local dir
-            paths['to'] = dirname(config['local-dir-path'])
+            path_from = build_remote_path(config, False)
+            path_to = build_local_path(config, True)
         else:
-            paths['from'] = f"{config['username']}@{config['remote-dir-path']}/{dir_name}"
-            paths['to'] = config['local-dir-path']
-    return paths
+            path_from = f"{build_remote_path(config, False)}/{dir_name}"
+            path_to = build_local_path(config, False)
+    return {
+        'from': path_from,
+        'to': path_to
+    }
+
+
+def build_remote_path(config, is_parent):
+    """
+    Builds and returns the remote path based on the given config. If `is_parent` is `True`, returns the parent
+    directory.
+    @param config: wrapsync configuration
+    @param is_parent: whether the path should point to the parent directory of what's in the config
+    @return: built remote path
+    """
+    remote_path = ''
+    if is_parent:
+        remote_path = dirname(config['remote-path'])
+    else:
+        remote_path = config['remote-path']
+    return f"{config['username']}@{config['domain']}:{remote_path}"
+
+
+def build_local_path(config, is_parent):
+    """
+    Builds and returns the local path based on the given config. If `is_parent` is `True`, returns the parent
+    directory.
+    @param config: wrapsync configuration
+    @param is_parent: whether the path should point to the parent directory of what's in the config
+    @return: built local path
+    """
+    if is_parent:
+        return dirname(config['local-path'])
+    else:
+        return config['local-path']
 
 
 def get_rsync_command(args, config):
@@ -122,7 +179,7 @@ def execute_rsync(cmd):
     try:
         subprocess.check_call(cmd)
     except subprocess.CalledProcessError:
-        raise_error('Exception occurred while running the following command:\n', cmd)
+        raise_error('Exception occurred while running the following command:', cmd)
     except KeyboardInterrupt:
         print_coloured(f"\n[{get_time()}] ", 'white')
         print_coloured('KeyboardInterrupt: ', 'yellow', 'bold')

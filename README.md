@@ -10,44 +10,67 @@ directories.
 
 1. Rename `config.example.json` to `config.json`.
 
-1. Prepare the variables inside of the `config.json` file.
+1. Prepare the variables inside the config file.
 
    Required:
 
-   - `username` – SSH login,
-   - `remote-dir-path` – an absolute path to the remote directory containing
-     everything we may want to sync, e.g. `john@ssh-example.com:/home/john/services`,
-   - `local-dir-path` – an absolute path to the local directory containing
-     everything we may want to sync, e.g. `/Users/Documents/services`.
+   - `username` – SSH login.
+   - `domain` – full URL at which the SSH port is exposed.
+   - `remote-path` – an absolute path to the remote directory containing
+     everything we may want to sync.
+   - `local-path` – an absolute path to the local directory containing
+     everything we may want to sync.
 
    Optional:
 
    - `flags` – `rsync` flags; if no flags are given, this option will be
-     omitted,
+     omitted.
    - `exclude` – an array of patterns of file names/directory names; what
-     matches these patterns will be excluded from synchronising; defaults to no
-     exclusions; e.g.:
+     matches these patterns will be excluded from syncing; defaults to no
+     exclusions.
 
-     ```json
-     "exclude": [
-       "node_modules",
-       "vendor",
-       "bin",
-       "*.class"
-     ]
-     ```
+   Example config:
 
-1. Create a symlink to the script for convenience.
+   - The SSH username is `georgesmith`.
+   - The SSH URL is `ssh-example.com`.
+   - The absolute path to the parent directory of all the directories/projects
+     we may want to `rsync` on the remote machine is `/home/george/services`.
+   - The local equivalent is `/Users/george/services`.
+   - The `rsync` flags we need are `-a` and `-P`.
+   - And George wants to exclude `node_modules` directory and all `*.jar` files
+     from syncing.
+
+   ```json
+   "username": "georgesmith",
+   "domain": "ssh-example.com",
+   "remote-path": "/home/george/services",
+   "local-path": "/Users/george/services",
+   "flags": "aP",
+   "exclude": ["node_modules", "*.jar"]
+   ```
+
+1. Run the script.
+
+   ```console
+   cd wrapsync2
+   ./wrapsync2 <push/pull/help> <dir_name> [rsync_options]
+
+   # Examples:
+   ./wrapsync2 push my-first-python-project --update
+   ./wrapsync2 pull my-second-python-project --delete
+   ```
+
+1. (Optional) For convenience, create a symlink to the script.
 
    ```console
    cd wrapsync2
    ln -s "$(pwd)/wrapsync2.py" /usr/local/bin/ws
    ```
 
-1. Now the script can be used from anywhere:
+   Now the script can be used from anywhere:
 
    ```console
-   ws <pull/push> <service> [options]
+   ws <pull/push/help> <dir_name> [options]
 
    # Examples:
    ws push linux --update
@@ -66,7 +89,8 @@ directories.
 
    ```console
    python3 -m pytest
-   # Or simply...
+
+   # Or simply:
    pytest
    ```
 
