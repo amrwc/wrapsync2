@@ -1,8 +1,8 @@
 # Workflow based on the following GitHub article:
 # https://docs.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions
-name: Python Test and Lint
+name: Python
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
