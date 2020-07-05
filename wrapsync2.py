@@ -124,11 +124,7 @@ def build_remote_path(config, is_parent):
     @param is_parent: whether the path should point to the parent directory of what's in the config
     @return: built remote path
     """
-    remote_path = ''
-    if is_parent:
-        remote_path = dirname(config['remote-path'])
-    else:
-        remote_path = config['remote-path']
+    remote_path = dirname(config['remote-path']) if is_parent else config['remote-path']
     return f"{config['username']}@{config['domain']}:{remote_path}"
 
 
@@ -140,10 +136,7 @@ def build_local_path(config, is_parent):
     @param is_parent: whether the path should point to the parent directory of what's in the config
     @return: built local path
     """
-    if is_parent:
-        return dirname(config['local-path'])
-    else:
-        return config['local-path']
+    return dirname(config['local-path']) if is_parent else config['local-path']
 
 
 def get_rsync_command(args, config):
@@ -157,10 +150,8 @@ def get_rsync_command(args, config):
     # Append flags if, declared
     if config['flags']:
         cmd.append(f"-{config['flags']}")
-    # Append exclusions, if declared
-    if config['exclude']:
-        for exclude in config['exclude']:
-            cmd.append(f"--exclude='{exclude}'")
+    # Append exclusions
+    cmd.append(build_exclude_option(config['exclude']))
     # Append all remaining command-line arguments as rsync options
     for option in args['options']:
         cmd.append(option)
@@ -169,6 +160,20 @@ def get_rsync_command(args, config):
     cmd.append(paths['from'])
     cmd.append(paths['to'])
     return cmd
+
+
+def build_exclude_option(excludes):
+    """
+    Builds and returns the `--exclude` rsync option.
+    @param excludes: list of patterns to exclude
+    @return: `--exclude` option
+    """
+    exclude_option = '--exclude={'
+    for i, exclude in enumerate(excludes):
+        exclude_option += ', ' if i > 0 else ''
+        exclude_option += f"'{exclude}'"
+    exclude_option += '}'
+    return exclude_option
 
 
 def execute_rsync(cmd):
