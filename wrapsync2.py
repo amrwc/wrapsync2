@@ -170,7 +170,7 @@ def build_exclude_option(excludes):
     """
     exclude_option = '--exclude={'
     for i, exclude in enumerate(excludes):
-        exclude_option += ', ' if i > 0 else ''
+        exclude_option += ',' if i > 0 else ''
         exclude_option += f"'{exclude}'"
     exclude_option += '}'
     return exclude_option

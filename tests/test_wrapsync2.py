@@ -105,16 +105,16 @@ def should_have_built_local_path(is_parent, expected_result):
 
 @pytest.mark.parametrize('args, expected_result', [
     ({'action': 'push', 'dir_name': 'directory_name', 'options': []},
-     ['rsync', '-aP', '--exclude={\'node_modules\', \'*.jar\'}',
+     ['rsync', '-aP', '--exclude={\'node_modules\',\'*.jar\'}',
       f"{LOCAL_PATH}/directory_name", f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}"]),
     ({'action': 'pull', 'dir_name': 'directory_name', 'options': []},
-     ['rsync', '-aP', '--exclude={\'node_modules\', \'*.jar\'}',
+     ['rsync', '-aP', '--exclude={\'node_modules\',\'*.jar\'}',
       f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}/directory_name", f"{LOCAL_PATH}"]),
     ({'action': 'push', 'dir_name': 'all', 'options': ['--update']},
-     ['rsync', '-aP', '--exclude={\'node_modules\', \'*.jar\'}',
+     ['rsync', '-aP', '--exclude={\'node_modules\',\'*.jar\'}',
       '--update', f"{LOCAL_PATH}", f"{USERNAME}@{DOMAIN}:{REMOTE_PARENT_PATH}"]),
     ({'action': 'pull', 'dir_name': 'all', 'options': ['--delete', '--whatever']},
-     ['rsync', '-aP', '--exclude={\'node_modules\', \'*.jar\'}',
+     ['rsync', '-aP', '--exclude={\'node_modules\',\'*.jar\'}',
       '--delete', '--whatever', f"{USERNAME}@{DOMAIN}:{REMOTE_PATH}", f"{LOCAL_PARENT_PATH}"])
 ])
 def should_have_gotten_rsync_command(args, expected_result):
@@ -124,7 +124,7 @@ def should_have_gotten_rsync_command(args, expected_result):
 @pytest.mark.parametrize('excludes, expected_result', [
     ([], '--exclude={}'),
     (['node_modules'], '--exclude={\'node_modules\'}'),
-    (['node_modules', '*.jar'], '--exclude={\'node_modules\', \'*.jar\'}')
+    (['node_modules', '*.jar'], '--exclude={\'node_modules\',\'*.jar\'}')
 ])
 def should_have_build_exclude_option(excludes, expected_result):
     assert build_exclude_option(excludes) == expected_result
