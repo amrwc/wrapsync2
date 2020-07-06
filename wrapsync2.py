@@ -151,7 +151,8 @@ def get_rsync_command(args, config):
     if config['flags']:
         cmd.append(f"-{config['flags']}")
     # Append exclusions
-    cmd.append(build_exclude_option(config['exclude']))
+    for exclude in config['exclude']:
+        cmd.append(f"--exclude={exclude}")
     # Append all remaining command-line arguments as rsync options
     for option in args['options']:
         cmd.append(option)
@@ -160,20 +161,6 @@ def get_rsync_command(args, config):
     cmd.append(paths['from'])
     cmd.append(paths['to'])
     return cmd
-
-
-def build_exclude_option(excludes):
-    """
-    Builds and returns the `--exclude` rsync option.
-    @param excludes: list of patterns to exclude
-    @return: `--exclude` option
-    """
-    exclude_option = '--exclude={'
-    for i, exclude in enumerate(excludes):
-        exclude_option += ',' if i > 0 else ''
-        exclude_option += f"'{exclude}'"
-    exclude_option += '}'
-    return exclude_option
 
 
 def execute_rsync(cmd):
